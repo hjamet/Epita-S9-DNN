@@ -12,6 +12,7 @@ tensorflow = "^2.11.0"
 tensorflow-hub = "^0.12.0"
 lovely-tensors = "^0.1.8"
 pandas = "^1.5.2"
+black = "^22.10.0"
 
 [tool.poetry.dev-dependencies]
 
