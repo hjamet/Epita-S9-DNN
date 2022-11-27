@@ -12,6 +12,15 @@ This repository presents the project carried out at **Epita** in the **SCIA 2023
 
 The aim of this project is to re-implement the main innovative points presented by a research paper.
 
+### Project Description
+
+We choose to re-implement the paper [Axiomatic Attribution for Deep Networks](https://arxiv.org/abs/1703.01365). This paper presents a new method to explain the decisions of a neural network.
+
+In this project, we will do the following:
+1. Follow a [simpler tutorial](https://www.tensorflow.org/tutorials/interpretability/integrated_gradients)
+2. Follow a more detailled and [complete tutorial](https://github.com/GoogleCloudPlatform/training-data-analyst/blob/master/blogs/integrated_gradients/integrated_gradients.ipynb)
+3. Create and train our own network for image classification [MNIST](http://yann.lecun.com/exdb/mnist/) to apply our own implementation of Integrated Gradients.
+
 ## Repository Convention & Architecture
 
 ### Architecture
