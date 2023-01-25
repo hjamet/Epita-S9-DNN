@@ -12,8 +12,14 @@ This repository presents the project carried out at **Epita** in the **SCIA 2023
 
 The aim of this project is to re-implement the main innovative points presented by a research paper.
 
-Usage
-We recommand you using the compiled executable for windows you can find in the release section of this repository. If you want to run the code yourself, you can follow the instructions below.
+## Work done
+
+**Notre travail porte sur le papier : [Attribution Axiomatique Pour les réseaux de neurones profonds](https://arxiv.org/abs/1703.01365)**.
+
+Il se découpe en 3 parties :
+- *Lecture & Résumé du papier ainsi que de papiers complémentaires,* 👉 [**/slides**]
+- *Exploration naïve de la méthode présentée dans l'article, à l'aide de tutoriels en ligne* 👉 [**/notebooks**]
+- *Implémentation d'un outil permettant d'effectuer automatiquement le calcul des gradients intégrés sur différents types de réseaux.* 👉 [**/src**]
 
 ## Installation
 Just create a venv, install requirements and run the notebooks from the root directory.
