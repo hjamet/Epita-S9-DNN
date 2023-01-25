@@ -12,6 +12,44 @@ This repository presents the project carried out at **Epita** in the **SCIA 2023
 
 The aim of this project is to re-implement the main innovative points presented by a research paper.
 
+Usage
+We recommand you using the compiled executable for windows you can find in the release section of this repository. If you want to run the code yourself, you can follow the instructions below.
+
+## Installation
+Just create a venv, install requirements and run the notebooks from the root directory.
+
+### We recommend using pyenv to manage your python versions and poetry to manage your virtual environments
+```
+> pyenv install 3.9.7
+> pyenv shell 3.9.7
+> poetry install
+> poetry shell
+```
+
+#### In case of problem
+
+Try the following :
+
+```
+> pyenv install 3.9.7
+> pyenv shell 3.9.7
+> rm -rf .venv poetry.lock
+> cp .poetry.lock poetry.lock
+> poetry install
+> poetry shell
+```
+
+### Alternatively you can use python's venv module
+
+> **We are assuming you have python 3.9.7 installed !**
+
+```
+> python -m venv env
+> source env/bin/activate
+> python -m pip install -r requirements.txt
+> python src/main.py
+```
+
 ## Repository Convention & Architecture
 
 ### Architecture
