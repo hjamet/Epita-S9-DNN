@@ -17,9 +17,15 @@ The aim of this project is to re-implement the main innovative points presented 
 **Notre travail porte sur le papier : [Attribution Axiomatique Pour les réseaux de neurones profonds](https://arxiv.org/abs/1703.01365)**.
 
 Il se découpe en 3 parties :
-- *Lecture & Résumé du papier ainsi que de papiers complémentaires,* 👉 [**/slides**]
-- *Exploration naïve de la méthode présentée dans l'article, à l'aide de tutoriels en ligne* 👉 [**/notebooks**]
-- *Implémentation d'un outil permettant d'effectuer automatiquement le calcul des gradients intégrés sur différents types de réseaux.* 👉 [**/src**]
+- *Lecture & Résumé du papier ainsi que de papiers complémentaires,* 
+    - 👉 **/slides**
+- *Exploration naïve de la méthode présentée dans l'article, à l'aide de tutoriels en ligne* 
+    - 👉 **/notebooks/tensorflow.ipynb**
+    - 👉 **/notebooks/pytorch.ipynb**
+- *Implémentation d'un outil permettant d'effectuer automatiquement le calcul des gradients intégrés sur différents types de réseaux.* 
+    - 👉 **/src/IntegratedGradientsTool.py**.
+    - 👉 **/notebooks/IntegratedGradientsTool.ipynb**.
+
 
 ## Installation
 Just create a venv, install requirements and run the notebooks from the root directory.
