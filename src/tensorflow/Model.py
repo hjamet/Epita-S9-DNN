@@ -9,7 +9,10 @@ logger.setLevel(logging.INFO)
 
 
 class Model:
+    """A class to load and predict images using a pretrained model."""
+
     def __init__(self):
+        """Calling this constructor will download the pretrained model and the imagenet labels."""
 
         # Uninitialized variables
         self.model = None
@@ -30,11 +33,26 @@ class Model:
     # ---------------------------------------------------------------------------- #
 
     def summary(self):
+        """Prints a summary of the model.
+
+        Returns:
+            Model: The model object.
+        """
         logger.info("Model summary:")
         self.model.summary()
         return self
 
     def load_images(self, img_url: dict, display: bool = False):
+        """Loads the images from the urls and stores them in a dictionary. If display is True, it will display the images.
+        The dictionary keys are the image names and the values are the image tensors.
+
+        Args:
+            img_url (dict): A dictionary with the image names as keys and the image urls as values.
+            display (bool, optional): Display the images. Defaults to False.
+
+        Returns:
+            Model: The model object.
+        """
         logger.info("Loading images...")
         img_paths = {
             name: tf.keras.utils.get_file(name, url) for (name, url) in img_url.items()
@@ -55,6 +73,14 @@ class Model:
         return self
 
     def predict(self, display: bool = False):
+        """Predicts the class of the images. If display is True, it will display the predictions.
+
+        Args:
+            display (bool, optional): Display the predictions. Defaults to False.
+
+        Returns:
+            Model: The model object.
+        """
         logger.info("Predicting images classes...")
         self.predictions = {
             name: self.__predict_image(img_tensor)
@@ -83,6 +109,15 @@ class Model:
     # ---------------------------------------------------------------------------- #
 
     def __download_model(self, name: str, handle: str):
+        """Downloads the pretrained model.
+
+        Args:
+            name (str): The name of the model to download.
+            handle (str): The url of the model to download.
+
+        Returns:
+            Model: The model object.
+        """
         logger.info(f"Downloading pretrained model: {name}")
         self.model = tf.keras.Sequential(
             [
@@ -95,13 +130,32 @@ class Model:
         )
         self.model.build([None, 224, 224, 3])
 
+        return self
+
     def __download_labels(self, url: str):
+        """Downloads the imagenet labels.
+
+        Args:
+            url (str): The url of the labels to download.
+
+        Returns:
+            Model: The model object.
+        """
         logger.info("Downloading imagenet labels...")
         labels_path = tf.keras.utils.get_file("ImageNetLabels.txt", url)
         self.imagenet_labels = np.array(open(labels_path).read().splitlines())
         return self
 
     def __read_image(self, file_name: str):
+        """Reads an image from a file and converts it to a tensor. The image is resized to 224x224.
+        They are also normalized to the range [0, 1].
+
+        Args:
+            file_name (str): The path of the image to read.
+
+        Returns:
+            tf.Tensor: The image tensor.
+        """
         image = tf.io.read_file(file_name)
         image = tf.io.decode_jpeg(image, channels=3)
         image = tf.image.convert_image_dtype(image, tf.float32)
@@ -109,6 +163,15 @@ class Model:
         return image
 
     def __predict_image(self, image: tf.Tensor, k: int = 5):
+        """Predicts the class of an image. It returns the top k predictions.
+
+        Args:
+            image (tf.Tensor): The image tensor.
+            k (int, optional): The number of predictions to return. Defaults to 5.
+
+        Returns:
+            tuple: A tuple containing the labels and the probabilities of the predictions.
+        """
         image_batch = tf.expand_dims(image, 0)
         predictions = self.model(image_batch)
         probs = tf.nn.softmax(predictions, axis=-1)
