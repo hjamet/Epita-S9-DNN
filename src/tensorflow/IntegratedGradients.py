@@ -24,7 +24,7 @@ class IntegratedGradients:
         self.baseline = None
         self.interpolated_images = None
         self.gradients = None
-        self.integrate_gradients = None
+        self.integrated_gradients = None
 
         self.__generate_baseline(color=baseline_color)
 
@@ -117,9 +117,7 @@ class IntegratedGradients:
 
             if name in display:
                 plt.figure(figsize=(10, 4))
-                plt.title(
-                    f"Pour l'image {name}, en fonction du barycentre entre l'image de base et l'image d'origine"
-                )
+
                 ax1 = plt.subplot(1, 2, 1)
                 ax1.plot(probs)
                 ax1.set_title(
@@ -130,9 +128,7 @@ class IntegratedGradients:
                 ax1.set_ylim([0, 1])
 
                 ax2 = plt.subplot(1, 2, 2)
-                # Average across interpolation steps
                 average_grads = tf.reduce_mean(gradients[name], axis=[1, 2, 3])
-                # Normalize gradients to 0 to 1 scale. E.g. (x - min(x))/(max(x)-min(x))
                 average_grads_norm = (
                     average_grads - tf.math.reduce_min(average_grads)
                 ) / (tf.math.reduce_max(average_grads) - tf.reduce_min(average_grads))
@@ -141,6 +137,14 @@ class IntegratedGradients:
                 ax2.set_ylabel("Gradient moyen des pixels")
                 ax2.set_xlabel("Barycentre entre l'image de base et l'image d'origine")
                 ax2.set_ylim([0, 1])
+
+                # Add title
+                plt.suptitle(
+                    f"Pour l'image {name}, en fonction du barycentre entre l'image de base et l'image d'origine",
+                    fontsize=16,
+                )
+                # Add space under title
+                plt.subplots_adjust(top=0.85)
 
                 plt.show()
 
@@ -164,23 +168,47 @@ class IntegratedGradients:
         integrated_gradients = {}
         for name, gradients in self.gradients.items():
             logger.info(f"Integrating gradients for image {name}...")
-            integrated_gradients[name] = tf.reduce_mean(gradients, axis=0)
-            if name in display:
-                plt.figure(figsize=(10, 4))
-                plt.title(f"Pour l'image {name}")
-                ax1 = plt.subplot(1, 2, 1)
-                ax1.imshow(self.interpolated_images[name][0])
-                ax1.axis("off")
-                ax1.set_title("Image de base")
-
-                ax2 = plt.subplot(1, 2, 2)
-                ax2.imshow(integrated_gradients[name])
-                ax2.axis("off")
-                ax2.set_title("Integrated gradients")
-
-                plt.show()
+            grads = (gradients[:-1] + gradients[1:]) / tf.constant(2.0)
+            integrated_gradients[name] = tf.math.reduce_mean(grads, axis=0)
 
         self.integrated_gradients = integrated_gradients
+        return self
+
+    def plot_integrated_gradients(
+        self, display: list = [], cmap=plt.cm.inferno, overlay_alpha=0.4
+    ):
+        for name, integrated_gradients in self.integrated_gradients.items():
+            if name in display:
+                logger.info(f"Plotting integrated gradients for image {name}...")
+                # Sum of the attributions across color channels for visualization.
+                # The attribution mask shape is a grayscale image with height and width
+                # equal to the original image.
+                attribution_mask = tf.reduce_sum(
+                    tf.math.abs(integrated_gradients), axis=-1
+                )
+
+                image = self.interpolated_images[name][-1]
+
+                fig, axs = plt.subplots(nrows=2, ncols=2, squeeze=False, figsize=(8, 8))
+
+                axs[0, 0].set_title("Baseline image")
+                axs[0, 0].imshow(self.baseline)
+                axs[0, 0].axis("off")
+
+                axs[0, 1].set_title("Original image")
+                axs[0, 1].imshow(image)
+                axs[0, 1].axis("off")
+
+                axs[1, 0].set_title("Attribution mask")
+                axs[1, 0].imshow(attribution_mask, cmap=cmap)
+                axs[1, 0].axis("off")
+
+                axs[1, 1].set_title("Overlay")
+                axs[1, 1].imshow(attribution_mask, cmap=cmap)
+                axs[1, 1].imshow(image, alpha=overlay_alpha)
+                axs[1, 1].axis("off")
+
+                plt.tight_layout()
         return self
 
     # ---------------------------------------------------------------------------- #
