@@ -59,8 +59,8 @@ class IntegratedGradients:
         self.interpolated_images = {}
         for name, img in self.model.images_tensors.items():
             self.interpolated_images[name] = [
-                self.baseline + (img - self.baseline) * i / steps
-                for i in range(steps + 1)
+                self.baseline * ((steps - 1) - i) + (img - self.baseline) * i / steps
+                for i in range(steps)
             ]
         if display != {}:
             display = {
@@ -79,6 +79,8 @@ class IntegratedGradients:
                 for column, i in enumerate(range(0, steps + 1, steps // (nbr - 1))):
                     if column > len(ax) - 1:
                         break
+                    if i > steps - 1:
+                        i = steps - 1
                     ax[column].imshow(self.interpolated_images[name][i])
                     ax[column].axis("off")
                     ax[column].set_title(f"Step {i}")
