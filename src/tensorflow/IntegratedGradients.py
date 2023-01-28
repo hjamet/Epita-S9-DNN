@@ -153,13 +153,12 @@ class IntegratedGradients:
         self.gradients = gradients
         return self
 
-    def integrate_gradients(self, display: list = []):
+    def integrate_gradients(self):
         """Integrates the gradients of the model for each interpolated image.
         The integrated gradients are stored in the integrated_gradients attribute.
 
         Args:
             images (tf.Tensor): The images.
-            display (list, optional): A list of images to display. Defaults to [] (no images displayed).
 
         Returns:
             IntegratedGradients: The IntegratedGradients object.
