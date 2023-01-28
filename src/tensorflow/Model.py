@@ -16,7 +16,7 @@ class Model:
 
         # Uninitialized variables
         self.model = None
-        self.imagenet_labels = None
+        self.labels = None
         self.images_tensors = None
         self.predictions = None
 
@@ -143,7 +143,7 @@ class Model:
         """
         logger.info("Downloading imagenet labels...")
         labels_path = tf.keras.utils.get_file("ImageNetLabels.txt", url)
-        self.imagenet_labels = np.array(open(labels_path).read().splitlines())
+        self.labels = np.array(open(labels_path).read().splitlines())
         return self
 
     def __read_image(self, file_name: str):
@@ -176,5 +176,5 @@ class Model:
         predictions = self.model(image_batch)
         probs = tf.nn.softmax(predictions, axis=-1)
         top_probs, top_idxs = tf.math.top_k(input=probs, k=k)
-        top_labels = self.imagenet_labels[tuple(top_idxs)]
+        top_labels = self.labels[tuple(top_idxs)]
         return top_labels, top_probs[0]

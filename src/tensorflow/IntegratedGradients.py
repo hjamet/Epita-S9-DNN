@@ -1,6 +1,7 @@
 import logging
 import tensorflow as tf
 from matplotlib import pyplot as plt
+import numpy as np
 
 from Model import Model
 
@@ -21,7 +22,9 @@ class IntegratedGradients:
 
         # Uninitialized variables
         self.baseline = None
-        self.intepolated_images = None
+        self.interpolated_images = None
+        self.gradients = None
+        self.integrate_gradients = None
 
         self.__generate_baseline(color=baseline_color)
 
@@ -81,6 +84,103 @@ class IntegratedGradients:
                     ax[column].set_title(f"Step {i}")
                 plt.show()
 
+        return self
+
+    def compute_gradients(self, display: list = []):
+        """Computes the gradients of the model for each interpolated image.
+        The gradients are stored in the gradients attribute.
+
+        Args:
+            images (tf.Tensor): The images.
+            display (list, optional): A list of images to display. Defaults to [] (no images displayed).
+
+        Returns:
+            IntegratedGradients: The IntegratedGradients object.
+        """
+        if self.interpolated_images is None:
+            logger.warning("No interpolated images found. Interpolating images...")
+            self.interpolate_images()
+        gradients = {}
+        for name, images in self.interpolated_images.items():
+            logger.info(f"Computing average gradients for image {name}...")
+            with tf.GradientTape() as tape:
+                images = tf.stack(images, axis=0)
+                tape.watch(images)
+                logits = self.model.model(images)
+                probs = tf.nn.softmax(logits, axis=-1)[
+                    :,
+                    np.where(self.model.labels == self.model.predictions[name][0][0])[
+                        0
+                    ][0],
+                ]
+                gradients[name] = tape.gradient(probs, images)
+
+            if name in display:
+                plt.figure(figsize=(10, 4))
+                plt.title(
+                    f"Pour l'image {name}, en fonction du barycentre entre l'image de base et l'image d'origine"
+                )
+                ax1 = plt.subplot(1, 2, 1)
+                ax1.plot(probs)
+                ax1.set_title(
+                    "Probabilité de prédiction de la classe la plus probable."
+                )
+                ax1.set_ylabel("Confiance de la prédiction")
+                ax1.set_xlabel("Barycentre entre l'image de base et l'image d'origine")
+                ax1.set_ylim([0, 1])
+
+                ax2 = plt.subplot(1, 2, 2)
+                # Average across interpolation steps
+                average_grads = tf.reduce_mean(gradients[name], axis=[1, 2, 3])
+                # Normalize gradients to 0 to 1 scale. E.g. (x - min(x))/(max(x)-min(x))
+                average_grads_norm = (
+                    average_grads - tf.math.reduce_min(average_grads)
+                ) / (tf.math.reduce_max(average_grads) - tf.reduce_min(average_grads))
+                ax2.plot(average_grads_norm)
+                ax2.set_title("Moyenne normalisée des gradients des pixels.")
+                ax2.set_ylabel("Gradient moyen des pixels")
+                ax2.set_xlabel("Barycentre entre l'image de base et l'image d'origine")
+                ax2.set_ylim([0, 1])
+
+                plt.show()
+
+        self.gradients = gradients
+        return self
+
+    def integrate_gradients(self, display: list = []):
+        """Integrates the gradients of the model for each interpolated image.
+        The integrated gradients are stored in the integrated_gradients attribute.
+
+        Args:
+            images (tf.Tensor): The images.
+            display (list, optional): A list of images to display. Defaults to [] (no images displayed).
+
+        Returns:
+            IntegratedGradients: The IntegratedGradients object.
+        """
+        if self.gradients is None:
+            logger.warning("No gradients found. Computing gradients...")
+            self.compute_gradients()
+        integrated_gradients = {}
+        for name, gradients in self.gradients.items():
+            logger.info(f"Integrating gradients for image {name}...")
+            integrated_gradients[name] = tf.reduce_mean(gradients, axis=0)
+            if name in display:
+                plt.figure(figsize=(10, 4))
+                plt.title(f"Pour l'image {name}")
+                ax1 = plt.subplot(1, 2, 1)
+                ax1.imshow(self.interpolated_images[name][0])
+                ax1.axis("off")
+                ax1.set_title("Image de base")
+
+                ax2 = plt.subplot(1, 2, 2)
+                ax2.imshow(integrated_gradients[name])
+                ax2.axis("off")
+                ax2.set_title("Integrated gradients")
+
+                plt.show()
+
+        self.integrated_gradients = integrated_gradients
         return self
 
     # ---------------------------------------------------------------------------- #
