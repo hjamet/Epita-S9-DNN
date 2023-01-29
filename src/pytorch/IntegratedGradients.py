@@ -2,6 +2,7 @@ import logging
 import torch
 from matplotlib import pyplot as plt
 import numpy as np
+from tqdm.notebook import tqdm_notebook
 
 from Model import Model
 
@@ -19,7 +20,7 @@ class IntegratedGradients:
             model (Model): The model object. It must be an instance of the Model class.
         """
         self.model = model
-        self.attributions = None
+        self.intregrated_gradients = None
 
         # Uninitialized variables
         self.baseline = None
@@ -43,17 +44,15 @@ class IntegratedGradients:
         """
         logger.info("Computing integrated gradients...")
         images_tensor = torch.stack(list(self.model.images_tensors.values()))
-        attributions = self.__random_baseline_integrated_gradients(
+        attributions = self.__compute_trials(
             images_tensor,
             self.model.model,
-            self.model.labels,
-            self.__calculate_outputs_and_gradients,
-            steps=50,
+            steps=steps,
             num_random_trials=number_of_trials,
             cuda=True,
         )
 
-        self.attributions = {
+        self.intregrated_gradients = {
             name: attributions[i]
             for i, name in enumerate(list(self.model.images_tensors.keys()))
         }
@@ -61,16 +60,24 @@ class IntegratedGradients:
         return self
 
     def plot_integrated_gradients(
-        self, display: list = [], cmap=plt.cm.inferno, overlay_alpha=0.4
+        self, display: list = [], cmap=plt.cm.inferno, overlay_alpha: float = 0.4
     ):
+        """Plots the integrated gradients of the model.
+
+        Args:
+            display (list, optional): The list of the attributions to display. Default to [].
+            cmap (matplotlib.colors.Colormap, optional): The colormap to use. Defaults to plt.cm.inferno.
+            overlay_alpha (float, optional): The transparency of the overlay. Defaults to 0.4.
+
+        Returns:
+            IntegratedGradients: The IntegratedGradients object.
+        """
         if display == []:
-            display = list(self.attributions.keys())
-        for name, integrated_gradients in self.attributions.items():
+            display = list(self.intregrated_gradients.keys())
+        for name, integrated_gradients in self.intregrated_gradients.items():
             if name in display:
                 logger.info(f"Plotting integrated gradients for image {name}...")
-                # Sum of the attributions across color channels for visualization.
-                # The attribution mask shape is a grayscale image with height and width
-                # equal to the original image.
+
                 attribution_mask = np.sum(np.abs(integrated_gradients), axis=2)
 
                 image = self.model.images_tensors[name].numpy().transpose((1, 2, 0))
@@ -78,7 +85,7 @@ class IntegratedGradients:
                 fig, axs = plt.subplots(nrows=2, ncols=2, squeeze=False, figsize=(8, 8))
 
                 axs[0, 0].set_title("Baseline image")
-                axs[0, 0].imshow(self.baseline.numpy().transpose((2, 1, 0)))
+                axs[0, 0].imshow(self.baseline.numpy().transpose((1, 2, 0)))
                 axs[0, 0].axis("off")
 
                 axs[0, 1].set_title("Original image")
@@ -131,9 +138,7 @@ class IntegratedGradients:
             raise ValueError("Unknown color.")
         return self
 
-    def __calculate_outputs_and_gradients(
-        self, inputs, model, target_label_idx, cuda=False
-    ):
+    def __compute_gradients(self, inputs, model, cuda=False):
         gradients = []
         for input in inputs:
             input = self.__pre_processing(input, cuda)
@@ -150,39 +155,32 @@ class IntegratedGradients:
             gradient = input.grad.detach().cpu().numpy()[0]
             gradients.append(gradient)
         gradients = np.array(gradients)
-        return gradients, target_label_idx
+        return gradients
 
-    def __random_baseline_integrated_gradients(
+    def __compute_trials(
         self,
         inputs,
         model,
-        target_label_idx,
-        predict_and_gradients,
         steps,
         num_random_trials,
         cuda,
     ):
-        all_intgrads = []
-        for i in range(num_random_trials):
+        trails_gradients_list = []
+        for _ in tqdm_notebook(range(num_random_trials)):
             integrated_grad = self.__integrated_gradients(
                 inputs,
                 model,
-                target_label_idx,
-                predict_and_gradients,
                 steps=steps,
                 cuda=cuda,
             )
-            all_intgrads.append(integrated_grad)
-            print("the trial number is: {}".format(i))
-        avg_intgrads = np.average(np.array(all_intgrads), axis=0)
-        return avg_intgrads
+            trails_gradients_list.append(integrated_grad)
+        ig = np.average(np.array(trails_gradients_list), axis=0)
+        return ig
 
     def __integrated_gradients(
         self,
         inputs,
         model,
-        target_label_idx,
-        predict_and_gradients,
         steps=50,
         cuda=False,
     ):
@@ -190,7 +188,7 @@ class IntegratedGradients:
             self.baseline + (float(i) / steps) * (inputs - self.baseline)
             for i in range(0, steps + 1)
         ]
-        grads, _ = predict_and_gradients(scaled_inputs, model, target_label_idx, cuda)
+        grads = self.__compute_gradients(scaled_inputs, model, cuda)
         avg_grads = np.average(grads[:-1], axis=0)
         avg_grads = np.transpose(avg_grads, (1, 2, 0))
         delta_X = (
