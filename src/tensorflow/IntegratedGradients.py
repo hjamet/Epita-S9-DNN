@@ -59,8 +59,7 @@ class IntegratedGradients:
         self.interpolated_images = {}
         for name, img in self.model.images_tensors.items():
             self.interpolated_images[name] = [
-                self.baseline * ((steps - 1) - i) + (img - self.baseline) * i / steps
-                for i in range(steps)
+                self.baseline + (img - self.baseline) * i / steps for i in range(steps)
             ]
         if display != {}:
             display = {
@@ -178,6 +177,8 @@ class IntegratedGradients:
     def plot_integrated_gradients(
         self, display: list = [], cmap=plt.cm.inferno, overlay_alpha=0.4
     ):
+        if display == []:
+            display = list(self.integrated_gradients.keys())
         for name, integrated_gradients in self.integrated_gradients.items():
             if name in display:
                 logger.info(f"Plotting integrated gradients for image {name}...")
