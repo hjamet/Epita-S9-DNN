@@ -19,9 +19,9 @@ The aim of this project is to re-implement the main innovative points presented 
 It is divided into 3 parts:
 - *Reading & Summary of the paper as well as additional papers,*
     - 👉 **/slides**
-- *Naive exploration of the method presented in the paper, using an excellent online tutorial*
+- *Naive exploration of the method presented in the paper, using an excellent online tutorial, using the Tensorflow librairy*
     - 👉 **/notebooks/tensorflow.ipynb**
-- *Implementation of a tool to automatically compute integrated gradients on different types of networks. In particular, we have implemented our own version of Integrated Gradients for Pytorch.*
+- *A more optimised implementation of the method presented in the article using the PyTorch library*
     - 👉 **/src/IntegratedGradientsTool.py**.
     - 👉 **/notebooks/IntegratedGradientsTool.ipynb**.
 
