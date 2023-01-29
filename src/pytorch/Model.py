@@ -1,15 +1,17 @@
-import tensorflow as tf
-import tensorflow_hub as hub
-from matplotlib import pyplot as plt
+import torch
+import torchvision
 import logging
+import tensorflow as tf
 import numpy as np
+import PIL
+from matplotlib import pyplot as plt
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
 class Model:
-    """A class to load and predict images using a pretrained model. This class is based on a Tensorflow Model."""
+    """A class to load and predict images using a pretrained model. This class is based on a Pytorch Model."""
 
     def __init__(self):
         """Calling this constructor will download the pretrained model and the imagenet labels."""
@@ -20,27 +22,14 @@ class Model:
         self.images_tensors = None
         self.predictions = None
 
-        self.__download_model(
-            name="inception_v1",
-            handle="https://tfhub.dev/google/imagenet/inception_v1/classification/4",
-        )
+        self.__download_model()
         self.__download_labels(
-            url="https://storage.googleapis.com/download.tensorflow.org/data/ImageNetLabels.txt"
+            url="https://raw.githubusercontent.com/pytorch/hub/master/imagenet_classes.txt"
         )
 
-    # ---------------------------------------------------------------------------- #
-    #                                PUBLIC METHODS                                #
-    # ---------------------------------------------------------------------------- #
-
-    def summary(self):
-        """Prints a summary of the model.
-
-        Returns:
-            Model: The model object.
-        """
-        logger.info("Model summary:")
-        self.model.summary()
-        return self
+        # ---------------------------------------------------------------------------- #
+        #                                PUBLIC METHODS                                #
+        # ---------------------------------------------------------------------------- #
 
     def load_images(self, img_url: dict, display: bool = False):
         """Loads the images from the urls and stores them in a dictionary. If display is True, it will display the images.
@@ -65,6 +54,8 @@ class Model:
             logger.info("Displaying images...")
             plt.figure(figsize=(8, 8))
             for n, (name, img_tensors) in enumerate(self.images_tensors.items()):
+                # permute the dimensions of the image from (224, 224, 3) to (3, 224, 224)
+                img_tensors = img_tensors.numpy().transpose((1, 2, 0))
                 plt.imshow(img_tensors)
                 plt.title(name)
                 plt.axis("off")
@@ -91,7 +82,7 @@ class Model:
             logger.info("Displaying predictions...")
             for n, (name, (labels, probs)) in enumerate(self.predictions.items()):
                 fig, ax = plt.subplots(1, 2)
-                ax[0].imshow(self.images_tensors[name])
+                ax[0].imshow(self.images_tensors[name].numpy().transpose((1, 2, 0)))
                 ax[0].set_title(name)
                 ax[0].axis("off")
                 ax[1].barh(np.arange(5), probs)
@@ -104,31 +95,21 @@ class Model:
                 plt.show()
         return self
 
-    # ---------------------------------------------------------------------------- #
-    #                                PRIVATE METHODS                               #
-    # ---------------------------------------------------------------------------- #
+        # ---------------------------------------------------------------------------- #
+        #                                PRIVATE METHODS                               #
+        # ---------------------------------------------------------------------------- #
 
-    def __download_model(self, name: str, handle: str):
+    def __download_model(self):
         """Downloads the pretrained model.
-
-        Args:
-            name (str): The name of the model to download.
-            handle (str): The url of the model to download.
 
         Returns:
             Model: The model object.
         """
-        logger.info(f"Downloading pretrained model: {name}")
-        self.model = tf.keras.Sequential(
-            [
-                hub.KerasLayer(
-                    name=name,
-                    handle=handle,
-                    trainable=False,
-                ),
-            ]
+        logger.info(f"Downloading pretrained model: InceptionV1")
+        self.model = torch.hub.load(
+            "pytorch/vision:v0.10.0", "googlenet", pretrained=True
         )
-        self.model.build([None, 224, 224, 3])
+        self.model.eval()
 
         return self
 
@@ -156,25 +137,41 @@ class Model:
         Returns:
             tf.Tensor: The image tensor.
         """
-        image = tf.io.read_file(file_name)
-        image = tf.io.decode_jpeg(image, channels=3)
-        image = tf.image.convert_image_dtype(image, tf.float32)
-        image = tf.image.resize_with_pad(image, target_height=224, target_width=224)
-        return image
+        input_image = PIL.Image.open(file_name)
+        preprocess = torchvision.transforms.Compose(
+            [
+                torchvision.transforms.Resize(256),
+                torchvision.transforms.CenterCrop(224),
+                torchvision.transforms.ToTensor(),
+                torchvision.transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                ),
+            ]
+        )
+        input_tensor = preprocess(input_image)
+        return input_tensor
 
-    def __predict_image(self, image: tf.Tensor, k: int = 5):
+    def __predict_image(self, image: torch.Tensor, k: int = 5):
         """Predicts the class of an image. It returns the top k predictions.
 
         Args:
-            image (tf.Tensor): The image tensor.
+            image (torch.Tensor): The image tensor.
             k (int, optional): The number of predictions to return. Defaults to 5.
 
         Returns:
             tuple: A tuple containing the labels and the probabilities of the predictions.
         """
-        image_batch = tf.expand_dims(image, 0)
-        predictions = self.model(image_batch)
-        probs = tf.nn.softmax(predictions, axis=-1)
-        top_probs, top_idxs = tf.math.top_k(input=probs, k=k)
-        top_labels = self.labels[tuple(top_idxs)]
-        return top_labels, top_probs[0]
+        input_batch = image.unsqueeze(0)
+        if torch.cuda.is_available():
+            input_batch = input_batch.to("cuda")
+            self.model.to("cuda")
+
+        with torch.no_grad():
+            output = self.model(input_batch)
+
+        probabilities = torch.nn.functional.softmax(output[0], dim=0)
+        topk_prob, topk_class = torch.topk(probabilities, k=k)
+        topk_prob = topk_prob.cpu().numpy()
+        topk_class = topk_class.cpu().numpy()
+        topk_labels = self.labels[topk_class + 1]
+        return topk_labels, topk_prob
