@@ -31,6 +31,16 @@ class Model:
         #                                PUBLIC METHODS                                #
         # ---------------------------------------------------------------------------- #
 
+    def summary(self):
+        """Prints a summary of the model.
+
+        Returns:
+            Model: The model object.
+        """
+        logger.info("Model summary:")
+        print(self.model)
+        return self
+
     def load_images(self, img_url: dict, display: bool = False):
         """Loads the images from the urls and stores them in a dictionary. If display is True, it will display the images.
         The dictionary keys are the image names and the values are the image tensors.
