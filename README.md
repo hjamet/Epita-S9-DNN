@@ -14,14 +14,14 @@ The aim of this project is to re-implement the main innovative points presented 
 
 ## Work done
 
-**Notre travail porte sur le papier : [Attribution Axiomatique Pour les réseaux de neurones profonds](https://arxiv.org/abs/1703.01365)**.
+**Our work is on the paper: [Axiomatic Attribution for Deep Neural Networks](https://arxiv.org/abs/1703.01365)**.
 
-Il se découpe en 3 parties :
-- *Lecture & Résumé du papier ainsi que de papiers complémentaires,* 
+It is divided into 3 parts:
+- *Reading & Summary of the paper as well as additional papers,*
     - 👉 **/slides**
-- *Exploration naïve de la méthode présentée dans l'article, à l'aide d'un excellent tutoriel en ligne* 
+- *Naive exploration of the method presented in the paper, using an excellent online tutorial*
     - 👉 **/notebooks/tensorflow.ipynb**
-- *Implémentation d'un outil permettant d'effectuer automatiquement le calcul des gradients intégrés sur différents types de réseaux. Nous avons notament implémenté notre propre version des Gradients Intégrés pour Pytorch.* 
+- *Implementation of a tool to automatically compute integrated gradients on different types of networks. In particular, we have implemented our own version of Integrated Gradients for Pytorch.*
     - 👉 **/src/IntegratedGradientsTool.py**.
     - 👉 **/notebooks/IntegratedGradientsTool.ipynb**.
 
