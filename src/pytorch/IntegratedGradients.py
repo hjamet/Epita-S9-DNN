@@ -141,21 +141,19 @@ class IntegratedGradients:
     def __compute_gradients(self, inputs, model, cuda=False):
         gradients = []
         for input in inputs:
-            input = self.__pre_processing(input, cuda)
-            output = model(input)
-            output = torch.nn.functional.softmax(output, dim=1)
+            input = self.__to_tensor(input, cuda)
+            logits = model(input)
+            output = torch.nn.functional.softmax(logits, dim=1)
             index = np.zeros(output.shape, dtype=np.int64)
             index = torch.tensor(index, dtype=torch.int64)
             if cuda:
                 index = index.cuda()
             output = output.gather(1, index)
-            # clear grad
+
             model.zero_grad()
             output.sum().backward()
-            gradient = input.grad.detach().cpu().numpy()[0]
-            gradients.append(gradient)
-        gradients = np.array(gradients)
-        return gradients
+            gradients.append(input.grad.detach().cpu().numpy()[0])
+        return np.array(gradients)
 
     def __compute_trials(
         self,
@@ -167,7 +165,7 @@ class IntegratedGradients:
     ):
         trails_gradients_list = []
         for _ in tqdm_notebook(range(num_random_trials)):
-            integrated_grad = self.__integrated_gradients(
+            integrated_grad = self.__compute_integrated_gradients(
                 inputs,
                 model,
                 steps=steps,
@@ -177,7 +175,7 @@ class IntegratedGradients:
         ig = np.average(np.array(trails_gradients_list), axis=0)
         return ig
 
-    def __integrated_gradients(
+    def __compute_integrated_gradients(
         self,
         inputs,
         model,
@@ -188,24 +186,28 @@ class IntegratedGradients:
             self.baseline + (float(i) / steps) * (inputs - self.baseline)
             for i in range(0, steps + 1)
         ]
-        grads = self.__compute_gradients(scaled_inputs, model, cuda)
-        avg_grads = np.average(grads[:-1], axis=0)
-        avg_grads = np.transpose(avg_grads, (1, 2, 0))
-        delta_X = (
-            (
-                self.__pre_processing(inputs, cuda)
-                - self.__pre_processing(self.baseline, cuda)
+        gradients = self.__compute_gradients(scaled_inputs, model, cuda)
+        mean_gradients = np.average(gradients[:-1], axis=0)
+        mean_gradients = np.transpose(mean_gradients, (1, 2, 0))
+        integrated_gradients = (
+            np.transpose(
+                (
+                    (
+                        self.__to_tensor(inputs, cuda)
+                        - self.__to_tensor(self.baseline, cuda)
+                    )
+                    .detach()
+                    .squeeze(0)
+                    .cpu()
+                    .numpy()
+                ),
+                (0, 2, 3, 1),
             )
-            .detach()
-            .squeeze(0)
-            .cpu()
-            .numpy()
+            * mean_gradients
         )
-        delta_X = np.transpose(delta_X, (0, 2, 3, 1))
-        integrated_grad = delta_X * avg_grads
-        return integrated_grad
+        return integrated_gradients
 
-    def __pre_processing(self, obs, cuda):
+    def __to_tensor(self, obs, cuda):
         if cuda:
             torch_device = torch.device("cuda:0")
         else:
