@@ -138,7 +138,17 @@ class IntegratedGradients:
             raise ValueError("Unknown color.")
         return self
 
-    def __compute_gradients(self, inputs, model, cuda=False):
+    def __compute_gradients(self, inputs: np.array, model: Model, cuda: bool = False):
+        """Computes the gradients of the model.
+
+        Args:
+            inputs (np.array): The input images. The shape is (N, C, H, W).
+            model (Model): The model.
+            cuda (bool, optional): Whether to use cuda. Defaults to False.
+
+        Returns:
+            np.array: The gradients of the model.
+        """
         gradients = []
         for input in inputs:
             input = self.__to_tensor(input, cuda)
@@ -157,12 +167,24 @@ class IntegratedGradients:
 
     def __compute_trials(
         self,
-        inputs,
-        model,
-        steps,
-        num_random_trials,
-        cuda,
+        inputs: np.array,
+        model: Model,
+        steps: int,
+        num_random_trials: int,
+        cuda: bool = False,
     ):
+        """Computes the integrated gradients of the model.
+
+        Args:
+            inputs (np.array): The input images. The shape is (N, C, H, W).
+            model (Model): The model.
+            steps (int): The number of steps.
+            num_random_trials (int): The number of random trials.
+            cuda (bool, optional): Whether to use cuda. Defaults to False.
+
+        Returns:
+            np.array: The integrated gradients of the model.
+        """
         trails_gradients_list = []
         for _ in tqdm_notebook(range(num_random_trials)):
             integrated_grad = self.__compute_integrated_gradients(
@@ -177,11 +199,22 @@ class IntegratedGradients:
 
     def __compute_integrated_gradients(
         self,
-        inputs,
-        model,
-        steps=50,
-        cuda=False,
+        inputs: np.array,
+        model: Model,
+        steps: int = 50,
+        cuda: bool = False,
     ):
+        """Computes the integrated gradients of the model.
+
+        Args:
+            inputs (np.array): The input images. The shape is (N, C, H, W).
+            model (Model): The model.
+            steps (int, optional): The number of steps. Defaults to 50.
+            cuda (bool, optional): Whether to use cuda. Defaults to False.
+
+        Returns:
+            np.array: The integrated gradients of the model.
+        """
         scaled_inputs = [
             self.baseline + (float(i) / steps) * (inputs - self.baseline)
             for i in range(0, steps + 1)
@@ -207,12 +240,21 @@ class IntegratedGradients:
         )
         return integrated_gradients
 
-    def __to_tensor(self, obs, cuda):
+    def __to_tensor(self, array: np.array, cuda: bool = False):
+        """Converts a numpy array to a torch tensor.
+
+        Args:
+            array (np.array): The numpy array.
+            cuda (bool, optional): Whether to use cuda. Defaults to False.
+
+        Returns:
+            torch.tensor: The torch tensor.
+        """
         if cuda:
             torch_device = torch.device("cuda:0")
         else:
             torch_device = torch.device("cpu")
         obs_tensor = torch.tensor(
-            obs, dtype=torch.float32, device=torch_device, requires_grad=True
+            array, dtype=torch.float32, device=torch_device, requires_grad=True
         )
         return obs_tensor
