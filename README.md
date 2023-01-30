@@ -22,8 +22,8 @@ It is divided into 3 parts:
 - *Naive exploration of the method presented in the paper, using an excellent online tutorial, using the Tensorflow librairy*
     - 👉 **/notebooks/tensorflow.ipynb**
 - *A more optimised implementation of the method presented in the article using the PyTorch library*
-    - 👉 **/src/IntegratedGradientsTool.py**.
-    - 👉 **/notebooks/IntegratedGradientsTool.ipynb**.
+    - 👉 **/notebooks/pytorch.ipynb**
+
 
 
 ## Installation
