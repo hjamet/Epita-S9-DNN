@@ -160,9 +160,9 @@ class IntegratedGradients:
                 index = index.cuda()
             output = output.gather(1, index)
 
-            model.zero_grad()
             output.sum().backward()
             gradients.append(input.grad.detach().cpu().numpy()[0])
+            model.zero_grad()
         return np.array(gradients)
 
     def __compute_trials(
@@ -230,7 +230,6 @@ class IntegratedGradients:
                         - self.__to_tensor(self.baseline, cuda)
                     )
                     .detach()
-                    .squeeze(0)
                     .cpu()
                     .numpy()
                 ),
