@@ -18,7 +18,7 @@ The aim of this project is to re-implement the main innovative points presented 
 
 It is divided into 3 parts:
 - *Reading & Summary of the paper as well as additional papers,*
-    - 👉 **/slides**
+    - 👉 [**/slides**](slides/README.md)
 - *Naive exploration of the method presented in the paper, using an excellent online tutorial, using the Tensorflow librairy*
     - 👉 **/notebooks/tensorflow.ipynb**
 - *A more optimised implementation of the method presented in the article using the PyTorch library*
