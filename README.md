@@ -2,19 +2,13 @@
 
 ## Description
 
-This repository presents the project carried out at **Epita** in the **SCIA 2023** major for the DNN (Deep Neural Network) subject by the students:
+This repository presents the project I carried out at **Epita** in the **SCIA 2023** major for the DNN (Deep Neural Network) subject.
 
-* adrien.merat@epita.fr
-* corentin.duchene@epita.fr
-* hao.ye@epita.fr
-* henri.jamet@epita.fr
-* theo.perinet@epita.fr
-
-The aim of this project is to re-implement the main innovative points presented by a research paper.
+**The aim of this project is to re-implement the main innovative points presented by a research paper.**
 
 ## Work done
 
-**Our work is on the paper: [Axiomatic Attribution for Deep Neural Networks](https://arxiv.org/abs/1703.01365)**.
+**My work is on the paper: [Axiomatic Attribution for Deep Neural Networks](https://arxiv.org/abs/1703.01365)**.
 
 It is divided into 3 parts:
 - *Reading & Summary of the paper as well as additional papers,*
